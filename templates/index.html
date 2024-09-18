@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Text-to-SQL App</title>
+    <style>
+        /* Basic styles for layout */
+        body {
+            display: flex;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .sidebar {
+            width: 25%;
+            background-color: #f7f7f7;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            height: 100vh;
+            border-right: 1px solid #ccc;
+        }
+
+        .content {
+            width: 75%;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        pre {
+            background-color: #fff;
+            padding: 10px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        /* Styles for the examples section */
+        .examples {
+            margin-top: 20px;
+        }
+
+        .examples ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Database Schema</h2>
+        <pre>{{ database_schema }}</pre>
+    </div>
+    <div class="content">
+        <h1>Text-to-SQL Application</h1>
+        <form method="post">
+            <label for="user_input">Enter your query:</label><br><br>
+            <input type="text" id="user_input" name="user_input" class="query-input"
+                value="{{ query|default('') }}"><br><br>
+            <input type="submit" value="Submit" class="submit-button">
+        </form>
+
+        <!-- New Examples Section -->
+        <div class="examples">
+            <h2>Example Queries</h2>
+            <ul>
+                <li>List all products with their names and unit prices.</li>
+                <li>Show the orders made by the customer with ID 'ALFKI'.</li>
+                <li>Get the total number of orders placed in 1997.</li>
+                <li>Find employees who do not report to anyone.</li>
+                <li>Display the names and contact information of suppliers from Germany.</li>
+            </ul>
+        </div>
+
+        {% if results %}
+        <h2>Results for "{{ query }}"</h2>
+        <h4>SQL query "{{ sql_query }}"</h4>
+        <table>
+            <tr>
+                {% for column in columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in results %}
+            <tr>
+                {% for column, item in zip(columns, row) %}
+                <td>
+                    {% if column.lower() == 'picture' %}
+                    {% if item %}
+                    <img src="{{ item }}" alt="Image" width="100">
+                    {% else %}
+                    [No Image]
+                    {% endif %}
+                    {% else %}
+                    {{ item }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+        {% if error %}
+        <p class="error">{{ error|safe }}</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>
