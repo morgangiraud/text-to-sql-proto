@@ -113,9 +113,12 @@
             </ul>
         </div>
 
-        {% if results %}
+        {% if query %}
         <h2>Results for "{{ query }}"</h2>
         <h4>SQL query "{{ sql_query }}"</h4>
+        {% endif %}
+
+        {% if results %}
         <table>
             <tr>
                 {% for column in columns %}

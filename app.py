@@ -25,6 +25,7 @@ app = Flask(__name__)
 
 database_schema = extract_database_schema()
 
+
 tokenizer = AutoTokenizer.from_pretrained(
     # "mistralai/Mamba-Codestral-7B-v0.1",
     "mistralai/Mistral-7B-Instruct-v0.3",
@@ -43,7 +44,7 @@ model = AutoModelForCausalLM.from_pretrained(
 def generate_sql(prompt: str):
     with torch.inference_mode():
         model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        generated_ids = model.generate(**model_inputs, max_length=1024)
+        generated_ids = model.generate(**model_inputs, max_length=2048)
         completion = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         sql_query = extract_sql_from_output(completion)
 
@@ -67,7 +68,6 @@ def index():
         attempts = 3
         for attempt in range(attempts):
             logger.debug("Attempt %d to generate SQL query", attempt + 1)
-            print(prompt)
             sql_query = generate_sql(prompt)
             logger.debug("Generated SQL Query:\n%s", sql_query)
             is_valid, error_message = validate_sql(sql_query)
@@ -91,7 +91,7 @@ The previous SQL query generated was:
 ```{sql_query}```
 It returned the following error:
 {error_message}
-Please correct the SQL query based on the error and provide a new SQL query enclosed properly"""
+Please correct the SQL query based on the error and provide a new SQL query enclosed properly."""
 
         error_display = (
             f"Failed to generate a valid SQL query after {attempts} attempts.<br><br>"
