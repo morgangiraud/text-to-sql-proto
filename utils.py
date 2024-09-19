@@ -15,6 +15,7 @@ def get_prompt(database_schema: str, user_input: str):
 
 Your task is to generate a correct and optimized SQL query that answers the question using the provided schema. 
 Enclose your query in ```sql ... ```.
+Take the time to think step by step.
 
 **Database Schema:**
 
@@ -22,11 +23,43 @@ Enclose your query in ```sql ... ```.
 
 **User Question:**
 
-{user_input}
+{user_input}"""
+    return prompt
+
+
+def extend_prompt(base_prompt: str, attempt: int):
+    if attempt == 0:
+        prompt = (
+            base_prompt
+            + """
 
 **Generated SQL Query:**
 """
+        )
+    else:
+        prompt = (
+            base_prompt
+            + """
+Use all errors to correct the SQL query. Provide a new SQL query enclosed properly in ```sql ... ```.
+
+**Generated SQL Query:**
+"""
+        )
+
     return prompt
+
+
+def extend_prompt_with_error(prompt: str, sql_query: str, error_message: str):
+    return (
+        prompt
+        + f"""
+
+**Previously generated SQL Query:**
+```{sql_query}```
+
+**Returned Error:**
+```{error_message}```"""
+    )
 
 
 def extract_sql_from_output(generated_text):
@@ -34,10 +67,10 @@ def extract_sql_from_output(generated_text):
 
     pattern = r"```sql(.*?)```"
 
-    sql_start = generated_text.find("Generated SQL Query:")
+    sql_start = generated_text.find("**Generated SQL Query:**")
     if sql_start != -1:
         generated_text = generated_text[
-            sql_start + len("Generated SQL Query:") :
+            sql_start + len("**Generated SQL Query:**") :
         ].strip()
         matches = re.search(pattern, generated_text, re.DOTALL | re.IGNORECASE)
         if matches:

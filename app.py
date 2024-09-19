@@ -6,6 +6,8 @@ import torch
 
 from utils import (
     get_prompt,
+    extend_prompt,
+    extend_prompt_with_error,
     extract_database_schema,
     extract_sql_from_output,
     validate_sql,
@@ -63,11 +65,16 @@ def index():
         user_input = request.form["user_input"]
         logger.info("Received user input: %s", user_input)
 
-        prompt = get_prompt(database_schema, user_input)
+        base_prompt = get_prompt(database_schema, user_input)
         error_message = ""
-        attempts = 3
+        attempts = 5
         for attempt in range(attempts):
             logger.debug("Attempt %d to generate SQL query", attempt + 1)
+
+            prompt = extend_prompt(base_prompt, attempt)
+
+            print("\n\n---\n" + prompt + "\n\n")
+
             sql_query = generate_sql(prompt)
             logger.debug("Generated SQL Query:\n%s", sql_query)
             is_valid, error_message = validate_sql(sql_query)
@@ -86,12 +93,9 @@ def index():
                 )
             else:
                 logger.warning("SQL Query failed validation: %s", error_message)
-                prompt += f"""
-The previous SQL query generated was:
-```{sql_query}```
-It returned the following error:
-{error_message}
-Please correct the SQL query based on the error and provide a new SQL query enclosed properly."""
+                base_prompt = extend_prompt_with_error(
+                    base_prompt, sql_query, error_message
+                )
 
         error_display = (
             f"Failed to generate a valid SQL query after {attempts} attempts.<br><br>"
