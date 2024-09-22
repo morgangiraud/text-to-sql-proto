@@ -8,27 +8,7 @@ DB_PATH = "northwind-SQLite3/dist/northwind.db"
 logger = logging.getLogger(__name__)
 
 
-def extract_sql_from_output(generated_text):
-    logger.debug("Extracting SQL from model output")
-
-    pattern = r"```sql(.*?)```"
-
-    sql_start = generated_text.find("**Generated SQL Query:**")
-    if sql_start != -1:
-        generated_text = generated_text[
-            sql_start + len("**Generated SQL Query:**") :
-        ].strip()
-        matches = re.search(pattern, generated_text, re.DOTALL | re.IGNORECASE)
-        if matches:
-            sql_code = matches.group(1).strip()
-            return sql_code
-        else:
-            return generated_text
-    else:
-        return generated_text
-
-
-def extract_database_schema():
+def scan_database_schema():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     schema = ""
@@ -88,7 +68,27 @@ def extract_database_schema():
     return schema
 
 
-def validate_sql(sql_query):
+def extract_sql_from_output(generated_text):
+    logger.debug("Extracting SQL from model output")
+
+    pattern = r"```sql(.*?)```"
+
+    sql_start = generated_text.find("**Generated SQL Query:**")
+    if sql_start != -1:
+        generated_text = generated_text[
+            sql_start + len("**Generated SQL Query:**") :
+        ].strip()
+        matches = re.search(pattern, generated_text, re.DOTALL | re.IGNORECASE)
+        if matches:
+            sql_code = matches.group(1).strip()
+            return sql_code
+        else:
+            return generated_text
+    else:
+        return generated_text
+
+
+def validate_sql(sql_query: str):
     logger.debug("Validating SQL query")
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -133,3 +133,15 @@ def execute_sql(sql_query):
         return processed_results, columns
 
     return results, []
+
+
+def hardcoded_check_order_details_table_name(sql_query):
+    """
+    Very good examples of Mistral limitation:
+    - I do not easily force Mistral to output the proper name table Order Details enclosed in '"'
+    - So I need to monkey patch it, in case it is used in the query
+    """
+    pattern = r"(?i)\border(?:_?[dD]etails|[A-Z]etails)\b"
+    replacement = '"Order Details"'
+
+    return re.sub(pattern, replacement, sql_query)

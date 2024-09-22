@@ -6,10 +6,11 @@ import torch
 
 from src.prompt import get_base_prompt, extend_prompt_with_errors
 from src.utils import (
-    extract_database_schema,
+    scan_database_schema,
     extract_sql_from_output,
     validate_sql,
     execute_sql,
+    hardcoded_check_order_details_table_name,
 )
 
 logging.basicConfig(
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-database_schema = extract_database_schema()
+database_schema = scan_database_schema()
 
 
 tokenizer = AutoTokenizer.from_pretrained(
@@ -74,9 +75,11 @@ def index():
 
             prompt = extend_prompt_with_errors(base_prompt, errors)
 
-            print("\n\n---\n" + prompt + "\n\n")
+            # print("\n\n---\n" + prompt + "\n\n")
 
             sql_query = generate_sql(prompt)
+            sql_query = hardcoded_check_order_details_table_name(sql_query)
+
             logger.debug("Generated SQL Query:\n%s", sql_query)
             is_valid, error_message = validate_sql(sql_query)
             if is_valid:

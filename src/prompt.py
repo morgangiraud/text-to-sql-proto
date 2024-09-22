@@ -10,7 +10,7 @@ def get_base_prompt(dialect: str, database_schema: str, user_input: str):
     Given an input question, generate a syntactically correct {{ dialect }} query.
     Return the SQL query between ```sql and ``` tags.
 
-    Here are the provided information
+    Here are the provided information:
     1. **Database Schema**: Detailed information about tables, columns, and relationships. Be careful! Table name can contain space!
     2. **User Question**: A natural language query.
 
@@ -19,6 +19,8 @@ def get_base_prompt(dialect: str, database_schema: str, user_input: str):
     The SQL query MUST have in-line comments to explain what each clause does.
 
     Take the time to think step by step.
+
+    ##
 
     **Database Schema:**
 
