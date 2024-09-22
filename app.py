@@ -4,10 +4,8 @@ from flask import Flask, render_template, request
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 
-from utils import (
-    get_prompt,
-    extend_prompt,
-    extend_prompt_with_error,
+from src.prompt import get_base_prompt, extend_prompt_with_errors
+from src.utils import (
     extract_database_schema,
     extract_sql_from_output,
     validate_sql,
@@ -46,12 +44,14 @@ model = AutoModelForCausalLM.from_pretrained(
 def generate_sql(prompt: str):
     with torch.inference_mode():
         model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        generated_ids = model.generate(**model_inputs, max_length=2048)
+        generated_ids = model.generate(**model_inputs, max_length=4096)
         completion = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
         sql_query = extract_sql_from_output(completion)
 
     return sql_query
 
+
+dialect = "sqlite3"
 
 # Quick debug
 # user_input = "Get me all the categories"
@@ -65,13 +65,14 @@ def index():
         user_input = request.form["user_input"]
         logger.info("Received user input: %s", user_input)
 
-        base_prompt = get_prompt(database_schema, user_input)
+        base_prompt = get_base_prompt(dialect, database_schema, user_input)
         error_message = ""
         attempts = 5
+        errors = []
         for attempt in range(attempts):
             logger.debug("Attempt %d to generate SQL query", attempt + 1)
 
-            prompt = extend_prompt(base_prompt, attempt)
+            prompt = extend_prompt_with_errors(base_prompt, errors)
 
             print("\n\n---\n" + prompt + "\n\n")
 
@@ -92,10 +93,13 @@ def index():
                     database_schema=database_schema,
                 )
             else:
-                logger.warning("SQL Query failed validation: %s", error_message)
-                base_prompt = extend_prompt_with_error(
-                    base_prompt, sql_query, error_message
+                errors.append(
+                    {
+                        "sql_query": sql_query,
+                        "message": error_message,
+                    }
                 )
+                logger.warning("SQL Query failed validation: %s", error_message)
 
         error_display = (
             f"Failed to generate a valid SQL query after {attempts} attempts.<br><br>"

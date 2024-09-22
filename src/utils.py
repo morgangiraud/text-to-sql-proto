@@ -8,60 +8,6 @@ DB_PATH = "northwind-SQLite3/dist/northwind.db"
 logger = logging.getLogger(__name__)
 
 
-def get_prompt(database_schema: str, user_input: str):
-    prompt = f"""You are an expert database (sqlite3) assistant. Given:
-1. **Database Schema**: Detailed information about tables, columns, and relationships. Be careful! Table name cancontain space!
-2. **User Question**: A natural language query.
-
-Your task is to generate a correct and optimized SQL query that answers the question using the provided schema. 
-Enclose your query in ```sql ... ```.
-Take the time to think step by step.
-
-**Database Schema:**
-
-{database_schema}
-
-**User Question:**
-
-{user_input}"""
-    return prompt
-
-
-def extend_prompt(base_prompt: str, attempt: int):
-    if attempt == 0:
-        prompt = (
-            base_prompt
-            + """
-
-**Generated SQL Query:**
-"""
-        )
-    else:
-        prompt = (
-            base_prompt
-            + """
-Use all errors to correct the SQL query. Provide a new SQL query enclosed properly in ```sql ... ```.
-
-**Generated SQL Query:**
-"""
-        )
-
-    return prompt
-
-
-def extend_prompt_with_error(prompt: str, sql_query: str, error_message: str):
-    return (
-        prompt
-        + f"""
-
-**Previously generated SQL Query:**
-```{sql_query}```
-
-**Returned Error:**
-```{error_message}```"""
-    )
-
-
 def extract_sql_from_output(generated_text):
     logger.debug("Extracting SQL from model output")
 
@@ -102,7 +48,7 @@ def extract_database_schema():
         cursor.execute(f"PRAGMA table_info('{table_name}');")
         columns = cursor.fetchall()
         for column in columns:
-            cid = column[0]
+            # cid = column[0]
             name = column[1]
             data_type = column[2]
             not_null = bool(column[3])
@@ -124,14 +70,14 @@ def extract_database_schema():
         if foreign_keys:
             schema += "Foreign Keys:\n"
             for fk in foreign_keys:
-                id = fk[0]
-                seq = fk[1]
+                # id = fk[0]
+                # seq = fk[1]
                 fk_table = fk[2]
                 fk_from = fk[3]
                 fk_to = fk[4]
-                on_update = fk[5]
-                on_delete = fk[6]
-                match = fk[7]
+                # on_update = fk[5]
+                # on_delete = fk[6]
+                # match = fk[7]
                 schema += (
                     f"  - FOREIGN KEY ({fk_from}) REFERENCES {fk_table}({fk_to})\n"
                 )

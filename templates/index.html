@@ -85,6 +85,20 @@
             padding-left: 20px;
         }
     </style>
+
+    <!-- Include Highlight.js CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+
+    <!-- Include Highlight.js JS -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/sql.min.js"></script>
+
+    <!-- Initialize Highlight.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            hljs.highlightAll();
+        });
+    </script>
 </head>
 
 <body>
@@ -115,7 +129,8 @@
 
         {% if query %}
         <h2>Results for "{{ query }}"</h2>
-        <h4>SQL query "{{ sql_query }}"</h4>
+        <h4>Generated SQL Query:</h4>
+        <pre><code class="language-sql">{{ sql_query }}</code></pre>
         {% endif %}
 
         {% if results %}

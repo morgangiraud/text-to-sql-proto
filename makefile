@@ -52,5 +52,8 @@ lint-fix-unsafe:
 format:
 	ruff format .
 
+test:
+	pytest -s .
 
-.PHONY: lint lint-fix lint-fix-unsafe format
+
+.PHONY: lint lint-fix lint-fix-unsafe format test
