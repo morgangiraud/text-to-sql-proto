@@ -8,7 +8,7 @@ DB_PATH = "northwind-SQLite3/dist/northwind.db"
 logger = logging.getLogger(__name__)
 
 
-def scan_database_schema():
+def scan_db_schema():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     schema = ""

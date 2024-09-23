@@ -6,7 +6,7 @@ import torch
 
 from src.prompt import get_base_prompt, extend_prompt_with_errors
 from src.utils import (
-    scan_database_schema,
+    scan_db_schema,
     extract_sql_from_output,
     validate_sql,
     execute_sql,
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-database_schema = scan_database_schema()
+db_schema = scan_db_schema()
 
 
 tokenizer = AutoTokenizer.from_pretrained(
@@ -56,7 +56,7 @@ dialect = "sqlite3"
 
 # Quick debug
 # user_input = "Get me all the categories"
-# query = generate_sql(get_prompt(database_schema, user_input))
+# query = generate_sql(get_prompt(db_schema, user_input))
 # print(validate_sql(query))
 
 
@@ -66,7 +66,7 @@ def index():
         user_input = request.form["user_input"]
         logger.info("Received user input: %s", user_input)
 
-        base_prompt = get_base_prompt(dialect, database_schema, user_input)
+        base_prompt = get_base_prompt(dialect, db_schema, user_input)
         error_message = ""
         attempts = 5
         errors = []
@@ -93,7 +93,7 @@ def index():
                     query=user_input,
                     sql_query=sql_query,
                     zip=zip,
-                    database_schema=database_schema,
+                    db_schema=db_schema,
                 )
             else:
                 errors.append(
@@ -114,10 +114,10 @@ def index():
             "index.html",
             error=error_display,
             query=user_input,
-            database_schema=database_schema,
+            db_schema=db_schema,
         )
 
-    return render_template("index.html", database_schema=database_schema)
+    return render_template("index.html", db_schema=db_schema)
 
 
 if __name__ == "__main__":

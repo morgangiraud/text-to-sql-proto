@@ -4,7 +4,7 @@ import outlines
 
 
 @outlines.prompt
-def get_base_prompt(dialect: str, database_schema: str, user_input: str):
+def get_base_prompt(dialect: str, db_schema: str, user_input: str):
     """
     You are an agent designed to interact with a SQL database to find a correct SQL query for the given question.
     Given an input question, generate a syntactically correct {{ dialect }} query.
@@ -24,7 +24,7 @@ def get_base_prompt(dialect: str, database_schema: str, user_input: str):
 
     **Database Schema:**
 
-    {{ database_schema }}
+    {{ db_schema }}
 
     **User Question:**
 
