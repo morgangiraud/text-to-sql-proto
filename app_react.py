@@ -36,6 +36,7 @@ def index():
         user_prompt = generate_user_prompt(user_input)
         errors = []
         previous_actions = []
+        agent_outputs = []
         for attempt in range(bot.attempts):
             logger.debug(f"Attempt {attempt + 1} to generate SQL query")
             logger.debug(f"""User prompt:
@@ -69,6 +70,15 @@ def index():
                             observation = f"Validity: {is_valid}, Error: {error}"
                 logger.info(f"\x1b[33m Observation: {observation} \x1b[0m")
                 previous_actions.append(action + ": " + str(action_input))
+                agent_outputs.append(
+                    {
+                        "scratchpad": scratchpad,
+                        "thought": thought,
+                        "action": action,
+                        "action_input": action_input,
+                        "observation": observation,
+                    }
+                )
 
                 user_prompt = extend_user_prompt(
                     user_prompt, scratchpad, thought, action, action_input, observation
@@ -79,18 +89,22 @@ def index():
                 sql_query = decision["Final_Answer"]
                 logger.info(f"\x1b[34m Final thought: {thought} \x1b[0m")
                 logger.info(f"\x1b[34m Final Answer: {sql_query} \x1b[0m")
+                agent_outputs.append(
+                    {"final_thought": thought, "final_answer": sql_query}
+                )
 
                 is_valid, error_message = validate_sql(sql_query)
                 if is_valid:
                     results, columns = execute_sql(sql_query)
                     return render_template(
-                        "index.html",
+                        "agent_index.html",
                         results=results,
                         columns=columns,
                         query=user_input,
                         sql_query=sql_query,
                         zip=zip,
                         db_schema=db_schema,
+                        agent_outputs=agent_outputs,
                     )
                 else:
                     errors.append(
@@ -109,13 +123,14 @@ def index():
         )
         logger.error("All attempts failed. Error message: %s", error_message)
         return render_template(
-            "index.html",
+            "agent_index.html",
             error=error_display,
             query=user_input,
             db_schema=db_schema,
+            agent_outputs=agent_outputs,
         )
 
-    return render_template("index.html", db_schema=db_schema)
+    return render_template("agent_index.html", db_schema=db_schema)
 
 
 if __name__ == "__main__":

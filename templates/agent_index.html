@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Text-to-SQL App</title>
+    <style>
+        /* Basic styles for layout */
+        body {
+            display: flex;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .sidebar {
+            width: 25%;
+            background-color: #f7f7f7;
+            padding: 15px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            height: 100vh;
+            border-right: 1px solid #ccc;
+        }
+
+        .content {
+            width: 75%;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        h1,
+        h2 {
+            margin-top: 0;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        pre {
+            background-color: #fff;
+            padding: 10px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+
+        .error {
+            color: red;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        /* Styles for the examples section */
+        .examples {
+            margin-top: 20px;
+        }
+
+        .examples ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .agent-output {
+            background-color: #fafafa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .agent-output h3 {
+            margin-top: 0;
+        }
+
+        .agent-output pre {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+    </style>
+
+    <!-- Include Highlight.js CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/default.min.css">
+
+    <!-- Include Highlight.js JS -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/sql.min.js"></script>
+
+    <!-- Initialize Highlight.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            hljs.highlightAll();
+        });
+    </script>
+</head>
+
+<body>
+    <div class="sidebar">
+        <h2>Database Schema</h2>
+        <pre>{{ db_schema }}</pre>
+    </div>
+    <div class="content">
+        <h1>Text-to-SQL Application</h1>
+        <form method="post">
+            <label for="user_input">Enter your query:</label><br><br>
+            <input type="text" id="user_input" name="user_input" class="query-input"
+                value="{{ query|default('') }}"><br><br>
+            <input type="submit" value="Submit" class="submit-button">
+        </form>
+
+        <!-- New Examples Section -->
+        <div class="examples">
+            <h2>Example Queries</h2>
+            <ul>
+                <li>List all products with their names and unit prices.</li>
+                <li>Show the orders made by the customer with ID 'ALFKI'.</li>
+                <li>Get the total number of orders placed in 1997.</li>
+                <li>Find employees who do not report to anyone.</li>
+                <li>Display the names and contact information of suppliers from Germany.</li>
+            </ul>
+        </div>
+
+        <!-- Agent Outputs Section -->
+        {% if agent_outputs %}
+        <h2>Agent Outputs</h2>
+        {% for output in agent_outputs %}
+        <div class="agent-output">
+            {% if output.final_thought %}
+            <h3>Final Thought</h3>
+            <p>{{ output.final_thought }}</p>
+            <h3>Final Answer (Generated SQL Query)</h3>
+            <pre><code class="language-sql">{{ output.final_answer }}</code></pre>
+            {% else %}
+            <h3>Scratchpad</h3>
+            <p>{{ output.scratchpad }}</p>
+            <h3>Thought</h3>
+            <p>{{ output.thought }}</p>
+            <h3>Action</h3>
+            <p>{{ output.action }}</p>
+            <h3>Action Input</h3>
+            <pre><code class="language-sql">{{ output.action_input }}</code></pre>
+            <h3>Observation</h3>
+            <p>{{ output.observation }}</p>
+            {% endif %}
+            <hr>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+
+        {% if results %}
+        <table>
+            <tr>
+                {% for column in columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+            {% for row in results %}
+            <tr>
+                {% for column, item in zip(columns, row) %}
+                <td>
+                    {% if column.lower() == 'picture' %}
+                    {% if item %}
+                    <img src="{{ item }}" alt="Image" width="100">
+                    {% else %}
+                    [No Image]
+                    {% endif %}
+                    {% else %}
+                    {{ item }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+        {% if error %}
+        <p class="error">{{ error|safe }}</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>

@@ -88,6 +88,7 @@ def generate_react_prompt(schema: str, dialect: str, db_schema: str):
     
     You run in a loop of Scratchpad, Thought, Action, Action Input, PAUSE, Observation. 
     At the end of the loop you output a Final Answer. It MUST be a valid {{ dialect }} query!
+    Don't provide a final answer until you are sure you have a valid query.
     Use Scratchpad to store the information from the Observation useful to answer the question
     Use Thought to describe your thoughts about the question you have been asked \
         and reflect carefully about the Observation if it exists.

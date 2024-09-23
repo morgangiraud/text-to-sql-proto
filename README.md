@@ -16,9 +16,13 @@ make install
 
 1. **Run the Flask App**:
 
-   ```bash
-   python app.py
-   ```
+```bash
+python app.py
+```
+or 
+```bash
+python app_react.py # To use the ReAct Agent
+```
 
 2. **Open in Browser**:
 
