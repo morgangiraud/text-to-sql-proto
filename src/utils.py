@@ -1,11 +1,9 @@
 import re
 import sqlite3
 import base64
-import logging
+
 
 DB_PATH = "northwind-SQLite3/dist/northwind.db"
-
-logger = logging.getLogger(__name__)
 
 
 def scan_db_schema():
@@ -68,28 +66,7 @@ def scan_db_schema():
     return schema
 
 
-def extract_sql_from_output(generated_text):
-    logger.debug("Extracting SQL from model output")
-
-    pattern = r"```sql(.*?)```"
-
-    sql_start = generated_text.find("**Generated SQL Query:**")
-    if sql_start != -1:
-        generated_text = generated_text[
-            sql_start + len("**Generated SQL Query:**") :
-        ].strip()
-        matches = re.search(pattern, generated_text, re.DOTALL | re.IGNORECASE)
-        if matches:
-            sql_code = matches.group(1).strip()
-            return sql_code
-        else:
-            return generated_text
-    else:
-        return generated_text
-
-
 def validate_sql(sql_query: str):
-    logger.debug("Validating SQL query")
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()

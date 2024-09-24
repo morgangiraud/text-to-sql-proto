@@ -23,30 +23,33 @@ app = Flask(__name__)
 
 db_schema = scan_db_schema()
 dialect = "sqlite3"
-
-bot = ReactChatBot(dialect, db_schema, 5)
+attempts = 5
+bot = ReactChatBot(dialect, db_schema, attempts)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         user_input = request.form["user_input"]
-        logger.info("Received user input: %s", user_input)
+        logger.info(f"\x1b[36m -- Received user input: {user_input}\x1b[0m")
 
         user_prompt = generate_user_prompt(user_input)
         errors = []
         previous_actions = []
         agent_outputs = []
         for attempt in range(bot.attempts):
-            logger.debug(f"Attempt {attempt + 1} to generate SQL query")
+            logger.info(
+                f"\x1b[36m -- Attempt {attempt + 1} to generate SQL query\x1b[0m"
+            )
             logger.debug(f"""User prompt:
 ---
 {user_prompt}
 ---
 """)
-            result = bot(user_prompt)
-            json_result = json.loads(result)
-            decision = json_result["Decision"]
+
+            json_result = bot(user_prompt)
+            data = json.loads(json_result)
+            decision = data["Decision"]
             if "Final_Answer" not in list(decision.keys()):
                 scratchpad = decision["Scratchpad"]
                 thought = decision["Thought"]
@@ -97,7 +100,7 @@ def index():
                 if is_valid:
                     results, columns = execute_sql(sql_query)
                     return render_template(
-                        "agent_index.html",
+                        "react_index.html",
                         results=results,
                         columns=columns,
                         query=user_input,
@@ -123,14 +126,14 @@ def index():
         )
         logger.error("All attempts failed. Error message: %s", error_message)
         return render_template(
-            "agent_index.html",
+            "react_index.html",
             error=error_display,
             query=user_input,
             db_schema=db_schema,
             agent_outputs=agent_outputs,
         )
 
-    return render_template("agent_index.html", db_schema=db_schema)
+    return render_template("react_index.html", db_schema=db_schema)
 
 
 if __name__ == "__main__":

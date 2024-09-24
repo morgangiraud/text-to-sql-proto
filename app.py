@@ -1,13 +1,9 @@
 import logging
-
 from flask import Flask, render_template, request
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
 
-from src.prompt import get_base_prompt, extend_prompt_with_errors
+from src.simple import SimpleChatBot, get_base_prompt, extend_prompt_with_errors
 from src.utils import (
     scan_db_schema,
-    extract_sql_from_output,
     validate_sql,
     execute_sql,
     hardcoded_check_order_details_table_name,
@@ -25,65 +21,40 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 db_schema = scan_db_schema()
-
-
-tokenizer = AutoTokenizer.from_pretrained(
-    # "mistralai/Mamba-Codestral-7B-v0.1",
-    "mistralai/Mistral-7B-Instruct-v0.3",
-    padding_side="left",
-)
-
-
-model = AutoModelForCausalLM.from_pretrained(
-    # "mistralai/Mamba-Codestral-7B-v0.1",
-    "mistralai/Mistral-7B-Instruct-v0.3",
-    device_map="auto",
-    torch_dtype=torch.bfloat16,
-)
-
-
-def generate_sql(prompt: str):
-    with torch.inference_mode():
-        model_inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        generated_ids = model.generate(**model_inputs, max_length=4096)
-        completion = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-        sql_query = extract_sql_from_output(completion)
-
-    return sql_query
-
-
 dialect = "sqlite3"
-
-# Quick debug
-# user_input = "Get me all the categories"
-# query = generate_sql(get_prompt(db_schema, user_input))
-# print(validate_sql(query))
+attempts = 5
+bot = SimpleChatBot(dialect, db_schema, attempts, logger)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         user_input = request.form["user_input"]
-        logger.info("Received user input: %s", user_input)
+        logger.info(f"\x1b[36m -- Received user input: {user_input}\x1b[0m")
 
         base_prompt = get_base_prompt(dialect, db_schema, user_input)
         error_message = ""
         attempts = 5
         errors = []
         for attempt in range(attempts):
-            logger.debug("Attempt %d to generate SQL query", attempt + 1)
+            logger.info(
+                f"\x1b[36m -- Attempt {attempt + 1} to generate SQL query\x1b[0m"
+            )
 
             prompt = extend_prompt_with_errors(base_prompt, errors)
+            logger.debug(f"""User prompt:
+---
+{prompt}
+---
+""")
 
-            # print("\n\n---\n" + prompt + "\n\n")
-
-            sql_query = generate_sql(prompt)
+            sql_query = bot(prompt)
             sql_query = hardcoded_check_order_details_table_name(sql_query)
 
-            logger.debug("Generated SQL Query:\n%s", sql_query)
+            logger.info(f"\x1b[33m Generated SQL Query: {sql_query}\x1b[0m")
             is_valid, error_message = validate_sql(sql_query)
             if is_valid:
-                logger.debug("SQL Query Valid: %s", is_valid)
+                logger.info(f"\x1b[33m SQL Query Valid: {is_valid}\x1b[0m")
 
                 results, columns = execute_sql(sql_query)
                 return render_template(

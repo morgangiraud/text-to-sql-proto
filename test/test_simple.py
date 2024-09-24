@@ -1,4 +1,4 @@
-from src.prompt import get_base_prompt, extend_prompt_with_errors
+from src.simple import get_base_prompt, extend_prompt_with_errors
 
 
 def test_get_base_prompt():
